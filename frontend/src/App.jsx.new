@@ -1,0 +1,102 @@
+function Navbar(){
+  const { user, logout } = useAuth()
+  const { theme, setTheme } = useTheme()
+  
+  return (
+    <nav style={{ 
+      padding: '15px 25px', 
+      borderBottom: '1px solid rgba(0,0,0,0.08)', 
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '48px' }}>
+        <Link to="/" style={{ 
+          fontSize: '1.2em', 
+          fontWeight: 600,
+          color: 'var(--accent)'
+        }}>Together</Link>
+        <div style={{ 
+          display: 'flex', 
+          gap: 24, 
+          alignItems: 'center'
+        }}>
+          <Link to="/" style={{ fontSize: '1.1em', fontWeight: 500 }}>Home</Link>
+          <Link to="/create" style={{ fontSize: '1.1em', fontWeight: 500 }}>Create Project</Link>
+          <Link to="/about" style={{ fontSize: '1.1em', fontWeight: 500 }}>About</Link>
+          <Link to="/contact" style={{ fontSize: '1.1em', fontWeight: 500 }}>Contact</Link>
+        </div>
+      </div>
+      
+      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+        {user ? (
+          <div style={{ 
+            display: 'flex', 
+            gap: 24, 
+            alignItems: 'center',
+            marginLeft: '48px'
+          }}>
+            <button 
+              className="btn" 
+              onClick={logout}
+              style={{
+                padding: '8px 16px',
+                background: 'var(--accent)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px'
+              }}
+            >
+              Logout
+            </button>
+            <Link 
+              to={`/profile/${user._id}`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                border: '1px solid var(--accent)',
+                color: 'var(--accent)',
+                textDecoration: 'none'
+              }}
+            >
+              {user.avatar && (
+                <img 
+                  src={`http://localhost:5000${user.avatar}`}
+                  alt={user.username}
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                />
+              )}
+              {user.username}
+            </Link>
+            <button 
+              className="btn" 
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              style={{
+                padding: '8px 12px',
+                background: 'transparent',
+                border: '1px solid #ddd',
+                color: '#666',
+                borderRadius: '4px'
+              }}
+            >
+              {theme === 'light' ? '🌙' : '☀️'}
+            </button>
+          </div>
+        ) : (
+          <>
+            <Link to="/login" style={{ fontWeight: 500 }}>Login</Link>
+            <Link to="/register" style={{ fontWeight: 500 }}>Register</Link>
+          </>
+        )}
+      </div>
+    </nav>
+  )
+}
