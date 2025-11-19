@@ -320,6 +320,21 @@ export default function Profile(){
     await fetchProjects()
   }
 
+  const handleDeleteProject = async (projectId) => {
+    if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+      return
+    }
+    try {
+      await API.delete(`/projects/${projectId}`)
+      // Remove from local state
+      setOwnerProjects(prev => prev.filter(p => p._id !== projectId))
+      alert('Project deleted successfully')
+    } catch (err) {
+      console.error(err)
+      alert('Failed to delete project')
+    }
+  }
+
   const handleAvatarChange = (e) => {
     const file = e.target.files[0]
     if (file) {
@@ -434,8 +449,9 @@ export default function Profile(){
                         <div style={{ fontWeight:700 }}>{p.title}</div>
                         <div className="muted" style={{ fontSize:12 }}>{Math.min(100, Math.round((p.collected/p.goal||0)*100))}% funded</div>
                       </div>
-                      <div>
+                      <div style={{ display: 'flex', gap: '4px' }}>
                         <button className="btn" onClick={() => setEditingProject(p)} style={{ padding:'6px 8px' }}>Edit</button>
+                        <button className="btn" onClick={() => handleDeleteProject(p._id)} style={{ padding:'6px 8px', background: '#ef4444', color: 'white', border: 'none' }}>Delete</button>
                       </div>
                     </div>
                   ))}

@@ -9,6 +9,18 @@ const rateLimit = require('express-rate-limit');
 
 dotenv.config();
 
+// Validate required environment variables
+const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.error(`❌ Missing required environment variables: ${missingEnvVars.join(', ')}`);
+  console.error('Please ensure all variables are set in your .env file');
+  process.exit(1);
+}
+
+console.log('✓ Required environment variables loaded');
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -16,6 +28,10 @@ const limiter = rateLimit({
 });
 
 const app = express();
+
+// Import middleware
+const { validateInputMiddleware } = require('./middleware/validation');
+const { errorHandler } = require('./middleware/errorHandler');
 
 // Security middlewares
 // Allow cross-origin resource policy for static media, but disable the
@@ -42,6 +58,9 @@ try {
 // Need JSON for regular routes
 app.use(express.json());
 
+// Add validation middleware to request
+app.use(validateInputMiddleware);
+
 // Stripe webhook needs the raw body to validate signature. We'll capture raw body on the webhook route using a custom middleware below when mounting.
 
 // serve uploads (backend/uploads)
@@ -65,6 +84,11 @@ app.get('/', (req, res) => {
   return res.json({ status: 'ok', message: 'Together API is running' })
 });
 
+// Health check endpoint for deployment monitoring (Render, etc.)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', uptime: process.uptime() });
+});
+
 // routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -78,11 +102,13 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/payments', paymentsRoutes);
 
 // Mount webhook route with raw body capture
-// Mount webhook route with raw body capture
 app.use('/webhooks/stripe', express.raw({ type: 'application/json' }), (req, res, next) => {
   req.rawBody = req.body; // attach raw body (Buffer) for signature verification
   next();
 }, webhooksRoutes);
+
+// Error handler middleware (must be last)
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 

@@ -223,6 +223,74 @@ router.put('/:id', auth, (req, res) => {
       res.status(500).send('Server error');
     }
   })
-})
+});
+
+// Delete project (owner only)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        error: {
+          message: 'Invalid project ID',
+          code: 'INVALID_ID'
+        }
+      });
+    }
+
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({
+        error: {
+          message: 'Project not found',
+          code: 'NOT_FOUND'
+        }
+      });
+    }
+
+    // Check ownership
+    if (project.owner.toString() !== req.user.id) {
+      return res.status(403).json({
+        error: {
+          message: 'Not authorized to delete this project',
+          code: 'FORBIDDEN'
+        }
+      });
+    }
+
+    // Delete associated files from uploads directory
+    const allMedia = (project.images || []).concat(project.videos || []);
+    allMedia.forEach(mediaPath => {
+      if (mediaPath.startsWith('/uploads/')) {
+        const filePath = path.join(__dirname, '..', '..', mediaPath);
+        try {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (err) {
+          console.warn(`Could not delete file ${filePath}:`, err.message);
+        }
+      }
+    });
+
+    // Delete associated updates
+    await Update.deleteMany({ project: project._id });
+
+    // Delete the project
+    await Project.findByIdAndDelete(req.params.id);
+
+    res.json({ 
+      ok: true, 
+      message: 'Project deleted successfully' 
+    });
+  } catch (err) {
+    console.error('Delete project error:', err);
+    res.status(500).json({
+      error: {
+        message: 'Error deleting project',
+        code: 'SERVER_ERROR'
+      }
+    });
+  }
+});
 
 module.exports = router;
