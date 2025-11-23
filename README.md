@@ -252,7 +252,7 @@ This project does not include a license file by default. Add a `LICENSE` if you 
 For questions, reach out to the project owner or file an issue in the repository.
 
 
-### Deployed links
+### Deployed link
 
-`https://together-crowdfunding.onrender.com`
+https://together-crowdfunding.onrender.com
 
